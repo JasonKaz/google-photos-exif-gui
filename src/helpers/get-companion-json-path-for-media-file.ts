@@ -21,7 +21,7 @@ function generateJsonNamesForCounterPattern(
   
   const name = counterMatch.groups?.['name'];
   const counter = counterMatch.groups?.['counter'];
-  
+
   if (!name || !counter) {
     return jsonNames;
   }
@@ -35,6 +35,7 @@ function generateJsonNamesForCounterPattern(
   jsonNames.push(
     `${name}${counter}.json`,                                    // "2013-12-03(1).json"
     `${name}.supplemental-metadata${counter}.json`,             // "2013-12-03.supplemental-metadata(1).json"
+    `${name}${mediaFileExtension}.supplemental-metadata${counter}.json`,             // "2013-12-03.jpg.supplemental-metadata(1).json"
     `${name}.supplemental-metad${counter}.json`                // "2013-12-03.supplemental-metad(1).json"
   );
   
@@ -53,6 +54,7 @@ export function getCompanionJsonPathForMediaFile(mediaFilePath: string): string|
   const expansionMapper = (x: string) => ([
     `${x}.json`,
     `${x}.supplemental-metadata.json`,
+    `${x}.supplemental-metadat.json`,
     `${x}.supplemental-metad.json`,
     `${x}.supplemental-met.json`,
     `${x}.supplemental-m.json`,
@@ -65,7 +67,8 @@ export function getCompanionJsonPathForMediaFile(mediaFilePath: string): string|
     // Sometimes (if the photo has been edited inside Google Photos) we get files with a `-edited` suffix
     // These images don't have their own .json sidecars - for these we'd want to use the JSON sidecar for the original image
     // so we can ignore the "-edited" suffix if there is one
-    ...expansionMapper(mediaFileNameWithExtension.replace(/[-]edited/i, ''))
+    ...expansionMapper(mediaFileNameWithExtension.replace(/[-]edited/i, '')),
+    ...expansionMapper(mediaFileNameWithoutExtension.replace(/[-]edited/i, '')),
   ];
 
   // Handle files with counter patterns (e.g., "foo(1).jpg" or "2013-12-03(1).jpg")
