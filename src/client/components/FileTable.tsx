@@ -6,9 +6,10 @@ interface FileTableProps {
   files: FileComparisonInfo[];
   selectedFiles: Set<string>;
   onToggleFile: (filePath: string) => void;
+  imageMap: Record<string, string | null>;
 }
 
-export function FileTable({ files, selectedFiles, onToggleFile }: FileTableProps) {
+export function FileTable({ files, selectedFiles, onToggleFile, imageMap }: FileTableProps) {
   if (files.length === 0) {
     return <div style={{ marginTop: '20px' }}>No files found with matching JSON metadata.</div>;
   }
@@ -35,6 +36,7 @@ export function FileTable({ files, selectedFiles, onToggleFile }: FileTableProps
               fileInfo={fileInfo}
               isSelected={selectedFiles.has(fileInfo.mediaFileInfo.mediaFilePath)}
               onToggle={() => onToggleFile(fileInfo.mediaFileInfo.mediaFilePath)}
+              imageBase64={imageMap[fileInfo.mediaFileInfo.mediaFilePath] || null}
             />
           ))}
         </tbody>

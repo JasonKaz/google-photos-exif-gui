@@ -6,7 +6,10 @@ export interface FileComparisonInfo {
   jsonPhotoTakenTime: string | null;
   matches: boolean;
   canUpdate: boolean;
-  imageBase64?: string | null;
+}
+
+export interface GetImagesResponse {
+  images: Record<string, string | null>;
 }
 
 export interface ScanResponse {

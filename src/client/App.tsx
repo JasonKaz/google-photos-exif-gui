@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { FolderPicker } from './components/FolderPicker';
 import { FileTable } from './components/FileTable';
+import { Pagination } from './components/Pagination';
 import { UnmatchedFilesTable } from './components/UnmatchedFilesTable';
 import { UnmatchedJsonFilesTable } from './components/UnmatchedJsonFilesTable';
 import { FileComparisonInfo } from './types';
@@ -15,12 +16,18 @@ export function App() {
   const [error, setError] = useState<string | null>(null);
   const [selectedFiles, setSelectedFiles] = useState<Set<string>>(new Set());
   const [updating, setUpdating] = useState<boolean>(false);
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  const [itemsPerPage, setItemsPerPage] = useState<number>(25);
+  const [imageMap, setImageMap] = useState<Record<string, string | null>>({});
+  const [loadingImages, setLoadingImages] = useState<boolean>(false);
 
   const handleScan = async (path: string) => {
     setFolderPath(path);
     setLoading(true);
     setError(null);
     setSelectedFiles(new Set());
+    setCurrentPage(1); // Reset to first page on new scan
+    setImageMap({}); // Clear image map on new scan
 
     try {
       const { api } = await import('./api');
@@ -46,13 +53,77 @@ export function App() {
   };
 
   const handleSelectAll = () => {
-    const updatableFiles = files.filter(f => f.canUpdate);
-    if (selectedFiles.size === updatableFiles.length) {
-      setSelectedFiles(new Set());
+    // Select all updatable files on current page
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    const currentPageFiles = files.slice(startIndex, endIndex);
+    const updatableFilesOnPage = currentPageFiles.filter(f => f.canUpdate);
+    
+    const newSelected = new Set(selectedFiles);
+    const allOnPageSelected = updatableFilesOnPage.every(f => 
+      newSelected.has(f.mediaFileInfo.mediaFilePath)
+    );
+    
+    if (allOnPageSelected) {
+      // Deselect all on current page
+      updatableFilesOnPage.forEach(f => {
+        newSelected.delete(f.mediaFileInfo.mediaFilePath);
+      });
     } else {
-      setSelectedFiles(new Set(updatableFiles.map(f => f.mediaFileInfo.mediaFilePath)));
+      // Select all on current page
+      updatableFilesOnPage.forEach(f => {
+        newSelected.add(f.mediaFileInfo.mediaFilePath);
+      });
     }
+    
+    setSelectedFiles(newSelected);
   };
+  
+  const handleItemsPerPageChange = (newItemsPerPage: number) => {
+    setItemsPerPage(newItemsPerPage);
+    setCurrentPage(1); // Reset to first page when changing items per page
+  };
+
+  // Load images for the current page
+  useEffect(() => {
+    if (files.length === 0) {
+      return;
+    }
+
+    const loadImagesForPage = async () => {
+      const startIndex = (currentPage - 1) * itemsPerPage;
+      const endIndex = startIndex + itemsPerPage;
+      const currentPageFiles = files.slice(startIndex, endIndex);
+      
+      // Get file paths for images only
+      const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.heic'];
+      const imageFilePaths = currentPageFiles
+        .filter(f => imageExtensions.includes(f.mediaFileInfo.mediaFileExtension.toLowerCase()))
+        .map(f => f.mediaFileInfo.mediaFilePath);
+
+      if (imageFilePaths.length === 0) {
+        return;
+      }
+
+      setLoadingImages(true);
+      try {
+        const { api } = await import('./api');
+        const response = await api.getImages(imageFilePaths);
+        
+        // Update image map with new images
+        setImageMap(prev => ({
+          ...prev,
+          ...response.images,
+        }));
+      } catch (error) {
+        console.error('Failed to load images:', error);
+      } finally {
+        setLoadingImages(false);
+      }
+    };
+
+    loadImagesForPage();
+  }, [files, currentPage, itemsPerPage]);
 
   const handleUpdate = async () => {
     if (selectedFiles.size === 0 || !folderPath) {
@@ -107,30 +178,57 @@ export function App() {
         <div style={{ marginTop: '20px' }}>Scanning folder...</div>
       )}
 
-      {!loading && files.length > 0 && (
-        <>
-          <div style={{ marginTop: '20px', marginBottom: '10px' }}>
-            <button 
-              onClick={handleSelectAll}
-              style={{ marginRight: '10px', padding: '8px 16px' }}
-            >
-              {selectedFiles.size === files.filter(f => f.canUpdate).length ? 'Deselect All' : 'Select All'}
-            </button>
-            <button 
-              onClick={handleUpdate}
-              disabled={selectedFiles.size === 0 || updating}
-              style={{ padding: '8px 16px', backgroundColor: '#4CAF50', color: 'white', border: 'none', borderRadius: '4px', cursor: selectedFiles.size === 0 || updating ? 'not-allowed' : 'pointer' }}
-            >
-              {updating ? 'Updating...' : `Update ${selectedFiles.size} File(s)`}
-            </button>
-          </div>
-          <FileTable 
-            files={files}
-            selectedFiles={selectedFiles}
-            onToggleFile={handleToggleFile}
-          />
-        </>
-      )}
+      {!loading && files.length > 0 && (() => {
+        // Calculate pagination
+        const totalPages = Math.ceil(files.length / itemsPerPage);
+        const startIndex = (currentPage - 1) * itemsPerPage;
+        const endIndex = startIndex + itemsPerPage;
+        const currentPageFiles = files.slice(startIndex, endIndex);
+        
+        // Check if all updatable files on current page are selected
+        const updatableFilesOnPage = currentPageFiles.filter(f => f.canUpdate);
+        const allOnPageSelected = updatableFilesOnPage.length > 0 && 
+          updatableFilesOnPage.every(f => selectedFiles.has(f.mediaFileInfo.mediaFilePath));
+        
+        return (
+          <>
+            <div style={{ marginTop: '20px', marginBottom: '10px' }}>
+              <button 
+                onClick={handleSelectAll}
+                style={{ marginRight: '10px', padding: '8px 16px' }}
+              >
+                {allOnPageSelected ? 'Deselect All on Page' : 'Select All on Page'}
+              </button>
+              <button 
+                onClick={handleUpdate}
+                disabled={selectedFiles.size === 0 || updating}
+                style={{ padding: '8px 16px', backgroundColor: '#4CAF50', color: 'white', border: 'none', borderRadius: '4px', cursor: selectedFiles.size === 0 || updating ? 'not-allowed' : 'pointer' }}
+              >
+                {updating ? 'Updating...' : `Update ${selectedFiles.size} File(s)`}
+              </button>
+            </div>
+            {loadingImages && (
+              <div style={{ marginTop: '10px', fontSize: '14px', color: '#666' }}>
+                Loading images...
+              </div>
+            )}
+            <FileTable 
+              files={currentPageFiles}
+              selectedFiles={selectedFiles}
+              onToggleFile={handleToggleFile}
+              imageMap={imageMap}
+            />
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              itemsPerPage={itemsPerPage}
+              totalItems={files.length}
+              onPageChange={setCurrentPage}
+              onItemsPerPageChange={handleItemsPerPageChange}
+            />
+          </>
+        );
+      })()}
 
       {!loading && unmatchedFiles.length > 0 && (
         <div style={{ marginTop: '40px' }}>

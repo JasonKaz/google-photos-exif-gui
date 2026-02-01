@@ -1,5 +1,4 @@
 import express, { Request, Response } from 'express';
-import { readFile } from 'fs/promises';
 import { findSupportedMediaFiles } from '../../helpers/find-supported-media-files';
 import { findJsonFilesRecursively } from '../../helpers/find-json-files-recursively';
 import { readPhotoTakenTimeFromGoogleJson } from '../../helpers/read-photo-taken-time-from-google-json';
@@ -16,7 +15,6 @@ interface FileComparisonInfo {
   jsonPhotoTakenTime: string | null;
   matches: boolean;
   canUpdate: boolean;
-  imageBase64?: string | null;
 }
 
 export const scanController = {
@@ -69,40 +67,13 @@ export const scanController = {
         // Can update if: file supports EXIF and either has no EXIF date or dates don't match
         const canUpdate = mediaFile.supportsExif && (!exifDateTimeOriginal || !matches);
 
-        // Encode image as base64 for display (only for image files, not videos)
-        let imageBase64: string | null = null;
-        const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.heic'];
-        const isImage = imageExtensions.includes(mediaFile.mediaFileExtension.toLowerCase());
-        
-        if (isImage) {
-          try {
-            const imageBuffer = await readFile(mediaFile.mediaFilePath);
-            // Determine MIME type based on extension
-            const mimeTypes: Record<string, string> = {
-              '.jpg': 'image/jpeg',
-              '.jpeg': 'image/jpeg',
-              '.png': 'image/png',
-              '.gif': 'image/gif',
-              '.heic': 'image/heic',
-            };
-            const mimeType = mimeTypes[mediaFile.mediaFileExtension.toLowerCase()] || 'image/jpeg';
-            imageBase64 = `data:${mimeType};base64,${imageBuffer.toString('base64')}`;
-            console.log(`Successfully encoded image: ${mediaFile.mediaFileName}, size: ${imageBuffer.length} bytes`);
-          } catch (error) {
-            // If image can't be read, leave it null
-            console.error(`Failed to read image: ${mediaFile.mediaFilePath}`, error);
-          }
-        } else {
-          console.log(`Skipping non-image file: ${mediaFile.mediaFileName} (${mediaFile.mediaFileExtension})`);
-        }
-
+        // Don't encode images here - they will be fetched on demand per page
         const fileComparison: FileComparisonInfo = {
           mediaFileInfo: mediaFile,
           exifDateTimeOriginal,
           jsonPhotoTakenTime,
           matches,
           canUpdate,
-          imageBase64: imageBase64 || null, // Explicitly set to null if not an image or failed to read
         };
         
         fileComparisons.push(fileComparison);

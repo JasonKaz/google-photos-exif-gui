@@ -5,11 +5,12 @@ interface FileTableRowProps {
   fileInfo: FileComparisonInfo;
   isSelected: boolean;
   onToggle: () => void;
+  imageBase64?: string | null;
 }
 
-export function FileTableRow({ fileInfo, isSelected, onToggle }: FileTableRowProps) {
-  // Use base64 image data directly from the file info
-  const imageUrl = fileInfo.imageBase64 || '';
+export function FileTableRow({ fileInfo, isSelected, onToggle, imageBase64 }: FileTableRowProps) {
+  // Use base64 image data passed as prop
+  const imageUrl = imageBase64 || '';
   
   const formatDate = (dateStr: string | null): string => {
     if (!dateStr) return 'N/A';
