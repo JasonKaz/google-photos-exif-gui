@@ -13,7 +13,6 @@ interface FileComparisonInfo {
   mediaFileInfo: MediaFileInfo;
   exifDateTimeOriginal: string | null;
   jsonPhotoTakenTime: string | null;
-  matches: boolean;
   canUpdate: boolean;
 }
 
@@ -60,19 +59,16 @@ export const scanController = {
         if (mediaFile.supportsExif) {
           exifDateTimeOriginal = await readExifMetadata(mediaFile.mediaFilePath);
         }
-
-        // Compare timestamps (normalize to ISO format)
-        const matches = exifDateTimeOriginal === jsonPhotoTakenTime;
         
-        // Can update if: file supports EXIF and either has no EXIF date or dates don't match
-        const canUpdate = mediaFile.supportsExif && (!exifDateTimeOriginal || !matches);
+        // Can update if: file supports EXIF but has no EXIF date
+        // If EXIF date exists, we assume it's correct (even if it doesn't match JSON due to timezone differences)
+        const canUpdate = mediaFile.supportsExif && !exifDateTimeOriginal;
 
         // Don't encode images here - they will be fetched on demand per page
         const fileComparison: FileComparisonInfo = {
           mediaFileInfo: mediaFile,
           exifDateTimeOriginal,
           jsonPhotoTakenTime,
-          matches,
           canUpdate,
         };
         

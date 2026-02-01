@@ -27,12 +27,9 @@ export function FileTableRow({ fileInfo, isSelected, onToggle, imageBase64 }: Fi
       return 'Does not support EXIF';
     }
     if (!fileInfo.exifDateTimeOriginal) {
-      return 'Media has no EXIF date';
+      return 'No EXIF date';
     }
-    if (fileInfo.matches) {
-      return 'Match';
-    }
-    return 'Mismatch';
+    return 'Has EXIF date';
   };
 
   const getStatusColor = (): string => {
@@ -42,10 +39,7 @@ export function FileTableRow({ fileInfo, isSelected, onToggle, imageBase64 }: Fi
     if (!fileInfo.exifDateTimeOriginal) {
       return '#ff9800';
     }
-    if (fileInfo.matches) {
-      return '#4CAF50';
-    }
-    return '#f44336';
+    return '#4CAF50';
   };
 
   return (

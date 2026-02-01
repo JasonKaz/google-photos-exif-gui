@@ -4,7 +4,6 @@ export interface FileComparisonInfo {
   mediaFileInfo: MediaFileInfo;
   exifDateTimeOriginal: string | null;
   jsonPhotoTakenTime: string | null;
-  matches: boolean;
   canUpdate: boolean;
 }
 
