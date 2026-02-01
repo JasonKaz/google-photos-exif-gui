@@ -1,51 +1,49 @@
 {
-  "name": "google-photos-exif",
-  "description": "A tool to populate missing DateTimeOriginal EXIF metadata in Google Photos takeout, using Google's JSON metadata.",
-  "version": "2.0.0",
-  "author": "Matt Wilson @mattwilson1024",
-  "bin": {
-    "google-photos-exif": "./bin/run"
-  },
-  "bugs": "https://github.com/mattwilson1024/google-photos-exif/issues",
+  "name": "google-photos-exif-gui",
+  "description": "A web tool to populate missing DateTimeOriginal EXIF metadata in Google Photos takeout, using Google's JSON metadata.",
+  "version": "1.0.0",
+  "author": "Jason Kaczmarsky",
+  "bugs": "https://github.com/JasonKaz/google-photos-exif-gui/issues",
   "dependencies": {
     "@oclif/command": "^1",
     "@oclif/config": "^1",
     "@oclif/plugin-help": "^3",
-    "exiftool-vendored": "^12.1.0",
+    "cors": "^2.8.5",
+    "exiftool-vendored": "^35",
+    "express": "^4.18.2",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
     "tslib": "^1"
   },
   "devDependencies": {
     "@oclif/dev-cli": "^1",
-    "@types/node": "^10",
+    "@types/cors": "^2.8.13",
+    "@types/express": "^4.17.17",
+    "@types/node": "^25",
+    "@types/react": "^18.2.0",
+    "@types/react-dom": "^18.2.0",
+    "@vitejs/plugin-react": "^4.0.0",
+    "concurrently": "^8.2.0",
     "eslint": "^5.13",
     "eslint-config-oclif": "^3.1",
     "eslint-config-oclif-typescript": "^0.1",
-    "ts-node": "^8",
-    "typescript": "^3.3"
+    "ts-node": "^10",
+    "typescript": "^5.9",
+    "vite": "^4.3.9"
   },
-  "engines": {
-    "node": ">=10.1.0"
-  },
-  "files": [
-    "/bin",
-    "/lib"
-  ],
-  "homepage": "https://github.com/mattwilson1024/google-photos-exif",
-  "keywords": [
-    "oclif"
-  ],
+  "homepage": "https://github.com/JasonKaz/google-photos-exif-gui",
   "license": "MIT",
-  "main": "lib/index.js",
-  "oclif": {
-    "bin": "google-photos-exif"
-  },
-  "repository": "mattwilson1024/google-photos-exif",
+  "repository": "JasonKaz/google-photos-exif-gui",
   "scripts": {
     "posttest": "eslint . --ext .ts --config .eslintrc",
     "prepack": "rm -rf lib && tsc -b && oclif-dev readme",
     "test": "echo NO TESTS",
     "version": "oclif-dev readme && git add README.md",
-    "start": "./bin/run"
-  },
-  "types": "lib/index.d.ts"
+    "start": "./bin/run",
+    "dev": "concurrently \"ts-node src/server/index.ts\" \"vite\"",
+    "dev:server": "ts-node src/server/index.ts",
+    "dev:client": "vite",
+    "build": "vite build && tsc -b",
+    "build:server": "tsc -b"
+  }
 }

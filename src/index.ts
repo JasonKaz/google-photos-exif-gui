@@ -45,7 +45,7 @@ class GooglePhotosExif extends Command {
       await this.prepareDirectories(directories);
       await this.processMediaFiles(directories);
     } catch (error) {
-      this.error(error);
+      this.error(error instanceof Error ? error : new Error(String(error)));
       this.exit(1);
     }
 

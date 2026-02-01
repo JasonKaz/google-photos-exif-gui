@@ -1,10 +1,51 @@
 import { existsSync } from "fs"
 import { basename, dirname, extname, resolve } from 'path'
 
+/**
+ * Generates potential JSON filenames for media files that contain a counter pattern like (1), (2), etc.
+ * Handles multiple patterns:
+ * 1. "foo(1).jpg" -> "foo.jpg(1).json" (counter is after extension)
+ * 2. "2013-12-03(1).jpg" -> "2013-12-03.supplemental-metadata(1).json" (counter is before extension)
+ */
+function generateJsonNamesForCounterPattern(
+  mediaFileNameWithoutExtension: string,
+  mediaFileExtension: string,
+): string[] {
+  const jsonNames: string[] = [];
+  
+  // Check if the filename contains a counter pattern like (1), (2), etc.
+  const counterMatch = mediaFileNameWithoutExtension.match(/(?<name>.*)(?<counter>\(\d+\))$/);
+  if (!counterMatch) {
+    return jsonNames; // No counter found
+  }
+  
+  const name = counterMatch.groups?.['name'];
+  const counter = counterMatch.groups?.['counter'];
+  
+  if (!name || !counter) {
+    return jsonNames;
+  }
+  
+  // Pattern 1: Original logic - counter moved after extension
+  // Example: "foo(1).jpg" -> "foo.jpg(1).json"
+  jsonNames.push(`${name}${mediaFileExtension}${counter}.json`);
+  
+  // Pattern 2: Counter stays with base name, various JSON naming patterns
+  // Example: "2013-12-03(1).jpg" -> multiple variations
+  jsonNames.push(
+    `${name}${counter}.json`,                                    // "2013-12-03(1).json"
+    `${name}.supplemental-metadata${counter}.json`,             // "2013-12-03.supplemental-metadata(1).json"
+    `${name}.supplemental-metad${counter}.json`                // "2013-12-03.supplemental-metad(1).json"
+  );
+  
+  return jsonNames;
+}
+
 export function getCompanionJsonPathForMediaFile(mediaFilePath: string): string|null {
   const directoryPath = dirname(mediaFilePath);
   const mediaFileExtension = extname(mediaFilePath);
   let mediaFileNameWithoutExtension = basename(mediaFilePath, mediaFileExtension);
+  const mediaFileNameWithExtension = basename(mediaFilePath);
 
   // Sometimes (if the photo has been edited inside Google Photos) we get files with a `-edited` suffix
   // These images don't have their own .json sidecars - for these we'd want to use the JSON sidecar for the original image
@@ -17,17 +58,18 @@ export function getCompanionJsonPathForMediaFile(mediaFilePath: string): string|
   const potentialJsonFileNames: string[] = [
     `${mediaFileNameWithoutExtension}.json`,
     `${mediaFileNameWithoutExtension}${mediaFileExtension}.json`,
+    `${mediaFileNameWithoutExtension}.supplemental-metadata.json`,
+    `${mediaFileNameWithExtension}.supplemental-metad.json`,
+    `${mediaFileNameWithExtension}.sup.json`,
+    `${mediaFileNameWithExtension}.supplemental-metadata.json`
   ];
 
-  // Another edge case which seems to be quite inconsistent occurs when we have media files containing a number suffix for example "foo(1).jpg"
-  // In this case, we don't get "foo(1).json" nor "foo(1).jpg.json". Instead, we strangely get "foo.jpg(1).json".
-  // We can use a regex to look for this edge case and add that to the potential JSON filenames to look out for
-  const nameWithCounterMatch = mediaFileNameWithoutExtension.match(/(?<name>.*)(?<counter>\(\d+\))$/);
-  if (nameWithCounterMatch) {
-    const name = nameWithCounterMatch?.groups?.['name'];
-    const counter = nameWithCounterMatch?.groups?.['counter'];
-    potentialJsonFileNames.push(`${name}${mediaFileExtension}${counter}.json`);
-  }
+  // Handle files with counter patterns (e.g., "foo(1).jpg" or "2013-12-03(1).jpg")
+  const counterJsonNames = generateJsonNamesForCounterPattern(
+    mediaFileNameWithoutExtension,
+    mediaFileExtension,
+  );
+  potentialJsonFileNames.push(...counterJsonNames);
 
   // Sometimes the media filename ends with extra dash (eg. filename_n-.jpg + filename_n.json)
   const endsWithExtraDash = mediaFileNameWithoutExtension.endsWith('_n-');
