@@ -39,13 +39,13 @@ export const api = {
     return response.json();
   },
 
-  async updateExif(filePaths: string[], folderPath: string): Promise<UpdateExifResponse> {
+  async updateExif(filePaths: string[], folderPath: string, timezoneOffset: number): Promise<UpdateExifResponse> {
     const response = await fetch(`${API_BASE_URL}/api/update-exif`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ filePaths, folderPath }),
+      body: JSON.stringify({ filePaths, folderPath, timezoneOffset }),
     });
 
     if (!response.ok) {

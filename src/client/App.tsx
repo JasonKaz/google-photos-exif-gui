@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { FolderPicker } from './components/FolderPicker';
 import { FileTable } from './components/FileTable';
 import { Pagination } from './components/Pagination';
+import { OffsetSelector } from './components/OffsetSelector';
 import { UnmatchedFilesTable } from './components/UnmatchedFilesTable';
 import { UnmatchedJsonFilesTable } from './components/UnmatchedJsonFilesTable';
 import { FileComparisonInfo } from './types';
@@ -20,6 +21,7 @@ export function App() {
   const [itemsPerPage, setItemsPerPage] = useState<number>(25);
   const [imageMap, setImageMap] = useState<Record<string, string | null>>({});
   const [loadingImages, setLoadingImages] = useState<boolean>(false);
+  const [timezoneOffset, setTimezoneOffset] = useState<number>(0); // Default to UTC
 
   const handleScan = async (path: string) => {
     setFolderPath(path);
@@ -136,7 +138,7 @@ export function App() {
     try {
       const { api } = await import('./api');
       const filePaths = Array.from(selectedFiles);
-      const response = await api.updateExif(filePaths, folderPath);
+      const response = await api.updateExif(filePaths, folderPath, timezoneOffset);
 
       // Check for failures
       const failures = response.results.filter(r => !r.success);
@@ -146,7 +148,7 @@ export function App() {
       } else {
         setError(null);
         // Re-scan to refresh the data
-        await handleScan(folderPath);
+        //await handleScan(folderPath);
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to update EXIF');
@@ -192,20 +194,26 @@ export function App() {
         
         return (
           <>
-            <div style={{ marginTop: '20px', marginBottom: '10px' }}>
-              <button 
-                onClick={handleSelectAll}
-                style={{ marginRight: '10px', padding: '8px 16px' }}
-              >
-                {allOnPageSelected ? 'Deselect All on Page' : 'Select All on Page'}
-              </button>
-              <button 
-                onClick={handleUpdate}
-                disabled={selectedFiles.size === 0 || updating}
-                style={{ padding: '8px 16px', backgroundColor: '#4CAF50', color: 'white', border: 'none', borderRadius: '4px', cursor: selectedFiles.size === 0 || updating ? 'not-allowed' : 'pointer' }}
-              >
-                {updating ? 'Updating...' : `Update ${selectedFiles.size} File(s)`}
-              </button>
+            <div style={{ marginTop: '20px', marginBottom: '10px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              <OffsetSelector 
+                timezoneOffset={timezoneOffset}
+                onTimezoneChange={setTimezoneOffset}
+              />
+              <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+                <button 
+                  onClick={handleSelectAll}
+                  style={{ padding: '8px 16px' }}
+                >
+                  {allOnPageSelected ? 'Deselect All on Page' : 'Select All on Page'}
+                </button>
+                <button 
+                  onClick={handleUpdate}
+                  disabled={selectedFiles.size === 0 || updating}
+                  style={{ padding: '8px 16px', backgroundColor: '#4CAF50', color: 'white', border: 'none', borderRadius: '4px', cursor: selectedFiles.size === 0 || updating ? 'not-allowed' : 'pointer' }}
+                >
+                  {updating ? 'Updating...' : `Update ${selectedFiles.size} File(s)`}
+                </button>
+              </div>
             </div>
             {loadingImages && (
               <div style={{ marginTop: '10px', fontSize: '14px', color: '#666' }}>
@@ -217,6 +225,7 @@ export function App() {
               selectedFiles={selectedFiles}
               onToggleFile={handleToggleFile}
               imageMap={imageMap}
+              timezoneOffset={timezoneOffset}
             />
             <Pagination
               currentPage={currentPage}

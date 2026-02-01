@@ -7,9 +7,10 @@ interface FileTableProps {
   selectedFiles: Set<string>;
   onToggleFile: (filePath: string) => void;
   imageMap: Record<string, string | null>;
+  timezoneOffset: number;
 }
 
-export function FileTable({ files, selectedFiles, onToggleFile, imageMap }: FileTableProps) {
+export function FileTable({ files, selectedFiles, onToggleFile, imageMap, timezoneOffset }: FileTableProps) {
   if (files.length === 0) {
     return <div style={{ marginTop: '20px' }}>No files found with matching JSON metadata.</div>;
   }
@@ -37,6 +38,7 @@ export function FileTable({ files, selectedFiles, onToggleFile, imageMap }: File
               isSelected={selectedFiles.has(fileInfo.mediaFileInfo.mediaFilePath)}
               onToggle={() => onToggleFile(fileInfo.mediaFileInfo.mediaFilePath)}
               imageBase64={imageMap[fileInfo.mediaFileInfo.mediaFilePath] || null}
+              timezoneOffset={timezoneOffset}
             />
           ))}
         </tbody>

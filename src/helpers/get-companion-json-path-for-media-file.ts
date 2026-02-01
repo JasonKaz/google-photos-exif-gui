@@ -47,21 +47,25 @@ export function getCompanionJsonPathForMediaFile(mediaFilePath: string): string|
   let mediaFileNameWithoutExtension = basename(mediaFilePath, mediaFileExtension);
   const mediaFileNameWithExtension = basename(mediaFilePath);
 
-  // Sometimes (if the photo has been edited inside Google Photos) we get files with a `-edited` suffix
-  // These images don't have their own .json sidecars - for these we'd want to use the JSON sidecar for the original image
-  // so we can ignore the "-edited" suffix if there is one
-  mediaFileNameWithoutExtension = mediaFileNameWithoutExtension.replace(/[-]edited$/i, '');
-
   // The naming pattern for the JSON sidecar files provided by Google Takeout seem to be inconsistent. For `foo.jpg`,
   // the JSON file is sometimes `foo.json` but sometimes it's `foo.jpg.json`. Here we start building up a list of potential
   // JSON filenames so that we can try to find them later
-  const potentialJsonFileNames: string[] = [
-    `${mediaFileNameWithoutExtension}.json`,
-    `${mediaFileNameWithoutExtension}${mediaFileExtension}.json`,
-    `${mediaFileNameWithoutExtension}.supplemental-metadata.json`,
-    `${mediaFileNameWithExtension}.supplemental-metad.json`,
-    `${mediaFileNameWithExtension}.sup.json`,
-    `${mediaFileNameWithExtension}.supplemental-metadata.json`
+  const expansionMapper = (x: string) => ([
+    `${x}.json`,
+    `${x}.supplemental-metadata.json`,
+    `${x}.supplemental-metad.json`,
+    `${x}.supplemental-met.json`,
+    `${x}.supplemental-m.json`,
+    `${x}.sup.json`,
+  ]);
+
+  const expandedPotentialJsonFileNames: string[] = [
+    ...expansionMapper(mediaFileNameWithExtension),
+    ...expansionMapper(mediaFileNameWithoutExtension),
+    // Sometimes (if the photo has been edited inside Google Photos) we get files with a `-edited` suffix
+    // These images don't have their own .json sidecars - for these we'd want to use the JSON sidecar for the original image
+    // so we can ignore the "-edited" suffix if there is one
+    ...expansionMapper(mediaFileNameWithExtension.replace(/[-]edited/i, ''))
   ];
 
   // Handle files with counter patterns (e.g., "foo(1).jpg" or "2013-12-03(1).jpg")
@@ -69,7 +73,7 @@ export function getCompanionJsonPathForMediaFile(mediaFilePath: string): string|
     mediaFileNameWithoutExtension,
     mediaFileExtension,
   );
-  potentialJsonFileNames.push(...counterJsonNames);
+  expandedPotentialJsonFileNames.push(...counterJsonNames);
 
   // Sometimes the media filename ends with extra dash (eg. filename_n-.jpg + filename_n.json)
   const endsWithExtraDash = mediaFileNameWithoutExtension.endsWith('_n-');
@@ -82,12 +86,12 @@ export function getCompanionJsonPathForMediaFile(mediaFilePath: string): string|
 
   if (endsWithExtraDash || endsWithExtraNChar || endsWithExtraUnderscore) {
     // We need to remove that extra char at the end
-    potentialJsonFileNames.push(`${mediaFileNameWithoutExtension.slice(0, -1)}.json`);
+    expandedPotentialJsonFileNames.push(`${mediaFileNameWithoutExtension.slice(0, -1)}.json`);
   }
 
   // Now look to see if we have a JSON file in the same directory as the image for any of the potential JSON file names
   // that we identified earlier
-  for (const potentialJsonFileName of potentialJsonFileNames) {
+  for (const potentialJsonFileName of expandedPotentialJsonFileNames) {
     const jsonFilePath = resolve(directoryPath, potentialJsonFileName);
     if (existsSync(jsonFilePath)) {
       return jsonFilePath;

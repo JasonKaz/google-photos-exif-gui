@@ -1,14 +1,16 @@
 import React from 'react';
 import { FileComparisonInfo } from '../types';
+import { convertUtcToLocalDisplay } from '../helpers/convert-utc-to-local-display';
 
 interface FileTableRowProps {
   fileInfo: FileComparisonInfo;
   isSelected: boolean;
   onToggle: () => void;
   imageBase64?: string | null;
+  timezoneOffset: number;
 }
 
-export function FileTableRow({ fileInfo, isSelected, onToggle, imageBase64 }: FileTableRowProps) {
+export function FileTableRow({ fileInfo, isSelected, onToggle, imageBase64, timezoneOffset }: FileTableRowProps) {
   // Use base64 image data passed as prop
   const imageUrl = imageBase64 || '';
   
@@ -77,7 +79,12 @@ export function FileTableRow({ fileInfo, isSelected, onToggle, imageBase64 }: Fi
         {formatDate(fileInfo.exifDateTimeOriginal)}
       </td>
       <td style={{ padding: '10px', border: '1px solid #ddd', fontSize: '12px' }}>
-        {formatDate(fileInfo.jsonPhotoTakenTime)}
+        <div>{formatDate(fileInfo.jsonPhotoTakenTime)}</div>
+        {fileInfo.jsonPhotoTakenTime && (
+          <div style={{ marginTop: '4px', fontSize: '11px', color: '#666', fontStyle: 'italic' }}>
+            Offset: {convertUtcToLocalDisplay(fileInfo.jsonPhotoTakenTime, timezoneOffset)}
+          </div>
+        )}
       </td>
       <td style={{ padding: '10px', border: '1px solid #ddd' }}>
         <span style={{ color: getStatusColor(), fontWeight: 'bold' }}>

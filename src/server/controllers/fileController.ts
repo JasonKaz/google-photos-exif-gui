@@ -9,6 +9,7 @@ import { MediaFileInfo } from '../../models/media-file-info';
 interface UpdateExifRequest {
   filePaths: string[];
   folderPath: string;
+  timezoneOffset: number;
 }
 
 export const fileController = {
@@ -75,7 +76,7 @@ export const fileController = {
 
   async updateExif(req: express.Request, res: express.Response): Promise<void> {
     try {
-      const { filePaths, folderPath } = req.body as UpdateExifRequest;
+      const { filePaths, folderPath, timezoneOffset } = req.body as UpdateExifRequest;
       
       if (!filePaths || !Array.isArray(filePaths) || filePaths.length === 0) {
         res.status(400).json({ error: 'filePaths array is required' });
@@ -84,6 +85,11 @@ export const fileController = {
 
       if (!folderPath) {
         res.status(400).json({ error: 'folderPath is required' });
+        return;
+      }
+
+      if (typeof timezoneOffset !== 'number' || isNaN(timezoneOffset)) {
+        res.status(400).json({ error: 'timezoneOffset is required and must be a number' });
         return;
       }
 
@@ -121,7 +127,7 @@ export const fileController = {
             outputFileName: mediaFile.mediaFileName,
           };
 
-          await updateExifMetadata(fileInfoForUpdate, photoTimeTaken, errorDir);
+          await updateExifMetadata(fileInfoForUpdate, photoTimeTaken, errorDir, timezoneOffset);
           results.push({ filePath, success: true });
         } catch (error) {
           results.push({ 
