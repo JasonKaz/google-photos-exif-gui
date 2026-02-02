@@ -10,5 +10,7 @@ export const CONFIG: Config = {
     { extension: '.png',  supportsExif: true },
     { extension: '.avi',  supportsExif: false },
     { extension: '.mov',  supportsExif: false },
+    { extension: '.m4v',  supportsExif: true },
+    { extension: '.webm',  supportsExif: true },
   ],
 };

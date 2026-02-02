@@ -35,6 +35,7 @@ function generateJsonNamesForCounterPattern(
   jsonNames.push(
     `${name}${counter}.json`,                                    // "2013-12-03(1).json"
     `${name}.supplemental-metadata${counter}.json`,             // "2013-12-03.supplemental-metadata(1).json"
+    `${name}${mediaFileExtension}.supplemental-metadat${counter}.json`,             // "2013-12-03.jpg.supplemental-metadat(1).json"
     `${name}${mediaFileExtension}.supplemental-metadata${counter}.json`,             // "2013-12-03.jpg.supplemental-metadata(1).json"
     `${name}.supplemental-metad${counter}.json`                // "2013-12-03.supplemental-metad(1).json"
   );
@@ -53,12 +54,24 @@ export function getCompanionJsonPathForMediaFile(mediaFilePath: string): string|
   // JSON filenames so that we can try to find them later
   const expansionMapper = (x: string) => ([
     `${x}.json`,
+    `${x}.jp.json`,
     `${x}.supplemental-metadata.json`,
     `${x}.supplemental-metadat.json`,
+    `${x}.supplemental-metada.json`,
     `${x}.supplemental-metad.json`,
+    `${x}.supplemental-meta.json`,
     `${x}.supplemental-met.json`,
+    `${x}.supplemental-me.json`,
     `${x}.supplemental-m.json`,
+    `${x}.supplemental-.json`,
+    `${x}.supplemental.json`,
+    `${x}.supplementa.json`,
+    `${x}.supplement.json`,
+    `${x}.supplem.json`,
+    `${x}.supp.json`,
     `${x}.sup.json`,
+    `${x}.su.json`,
+    `${x}.s.json`,
   ]);
 
   const expandedPotentialJsonFileNames: string[] = [
@@ -90,6 +103,14 @@ export function getCompanionJsonPathForMediaFile(mediaFilePath: string): string|
   if (endsWithExtraDash || endsWithExtraNChar || endsWithExtraUnderscore) {
     // We need to remove that extra char at the end
     expandedPotentialJsonFileNames.push(`${mediaFileNameWithoutExtension.slice(0, -1)}.json`);
+  }
+
+  // Check for live photos, match on the jpg json file
+  if (mediaFileNameWithExtension.startsWith('MVIMG')) {
+    expandedPotentialJsonFileNames.push(...expansionMapper(`${mediaFileNameWithoutExtension}.jpg`));
+
+    const counterJsonNames = generateJsonNamesForCounterPattern(mediaFileNameWithoutExtension, '.jpg');
+    expandedPotentialJsonFileNames.push(...counterJsonNames);
   }
 
   // Now look to see if we have a JSON file in the same directory as the image for any of the potential JSON file names
