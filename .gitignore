@@ -123,3 +123,6 @@ dist
 
 
 .idea
+ffprobe.exe
+ffmpeg.exe
+sample-data

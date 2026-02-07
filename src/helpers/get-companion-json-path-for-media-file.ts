@@ -113,6 +113,11 @@ export function getCompanionJsonPathForMediaFile(mediaFilePath: string): string|
     expandedPotentialJsonFileNames.push(...counterJsonNames);
   }
 
+  // Check for iPhone live photos, match with the HEIC json file
+  if (mediaFileNameWithExtension.endsWith('MP4')) {
+    expandedPotentialJsonFileNames.push(...expansionMapper(`${mediaFileNameWithoutExtension}.heic`));
+  }
+
   // Now look to see if we have a JSON file in the same directory as the image for any of the potential JSON file names
   // that we identified earlier
   for (const potentialJsonFileName of expandedPotentialJsonFileNames) {

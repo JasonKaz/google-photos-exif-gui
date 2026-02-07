@@ -43,7 +43,7 @@
     "dev": "concurrently \"ts-node src/server/index.ts\" \"vite\"",
     "dev:server": "ts-node src/server/index.ts",
     "dev:client": "vite",
-    "build": "vite build && tsc -b",
+    "build": "vite build && tsc -b && copy ffprobe.exe lib && copy ffmpeg.exe lib",
     "build:server": "tsc -b"
   }
 }

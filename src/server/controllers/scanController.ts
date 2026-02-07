@@ -3,6 +3,7 @@ import { findSupportedMediaFiles } from '../../helpers/find-supported-media-file
 import { findJsonFilesRecursively } from '../../helpers/find-json-files-recursively';
 import { readPhotoTakenTimeFromGoogleJson } from '../../helpers/read-photo-taken-time-from-google-json';
 import { readExifMetadata } from '../../helpers/read-exif-metadata';
+import { readVideoCreationTime } from '../../helpers/read-video-creation-time';
 import { MediaFileInfo } from '../../models/media-file-info';
 
 interface ScanRequest {
@@ -57,7 +58,12 @@ export const scanController = {
 
         let exifDateTimeOriginal: string | null = null;
         if (mediaFile.supportsExif) {
-          exifDateTimeOriginal = await readExifMetadata(mediaFile.mediaFilePath);
+          if (mediaFile.mediaFileExtension.toLowerCase() === '.mp4') {
+            // For MP4 files, use ffprobe to read creation time
+            exifDateTimeOriginal = await readVideoCreationTime(mediaFile.mediaFilePath);
+          } else {
+            exifDateTimeOriginal = await readExifMetadata(mediaFile.mediaFilePath);
+          }
         }
         
         // Can update if: file supports EXIF but has no EXIF date

@@ -6,7 +6,7 @@ export const CONFIG: Config = {
     { extension: '.jpg',  supportsExif: true },
     { extension: '.heic', supportsExif: true },
     { extension: '.gif',  supportsExif: true },
-    { extension: '.mp4',  supportsExif: false },
+    { extension: '.mp4',  supportsExif: true },
     { extension: '.png',  supportsExif: true },
     { extension: '.avi',  supportsExif: false },
     { extension: '.mov',  supportsExif: true },

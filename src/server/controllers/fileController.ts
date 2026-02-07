@@ -2,6 +2,7 @@ import express, { Request, Response } from 'express';
 import { readFile } from 'fs/promises';
 import { existsSync } from 'fs';
 import { updateExifMetadata } from '../../helpers/update-exif-metadata';
+import { writeVideoCreationTime } from '../../helpers/write-video-creation-time';
 import { readPhotoTakenTimeFromGoogleJson } from '../../helpers/read-photo-taken-time-from-google-json';
 import { findSupportedMediaFiles } from '../../helpers/find-supported-media-files';
 import { MediaFileInfo } from '../../models/media-file-info';
@@ -120,14 +121,21 @@ export const fileController = {
             continue;
           }
 
-          // Create a modified MediaFileInfo with the original path as output path for in-place update
-          const fileInfoForUpdate: MediaFileInfo = {
-            ...mediaFile,
-            outputFilePath: mediaFile.mediaFilePath, // Update in place
-            outputFileName: mediaFile.mediaFileName,
-          };
+          // Check if file is MP4 - use writeVideoCreationTime for videos
+          if (mediaFile.mediaFileExtension.toLowerCase() === '.mp4') {
+            await writeVideoCreationTime(mediaFile.mediaFilePath, photoTimeTaken);
+          } else {
+            // For other files, use updateExifMetadata
+            // Create a modified MediaFileInfo with the original path as output path for in-place update
+            const fileInfoForUpdate: MediaFileInfo = {
+              ...mediaFile,
+              outputFilePath: mediaFile.mediaFilePath, // Update in place
+              outputFileName: mediaFile.mediaFileName,
+            };
 
-          await updateExifMetadata(fileInfoForUpdate, photoTimeTaken, errorDir, timezoneOffset);
+            await updateExifMetadata(fileInfoForUpdate, photoTimeTaken, errorDir, timezoneOffset);
+          }
+          
           results.push({ filePath, success: true });
         } catch (error) {
           results.push({ 
