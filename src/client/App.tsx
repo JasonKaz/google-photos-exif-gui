@@ -22,6 +22,8 @@ export function App() {
   const [imageMap, setImageMap] = useState<Record<string, string | null>>({});
   const [loadingImages, setLoadingImages] = useState<boolean>(false);
   const [timezoneOffset, setTimezoneOffset] = useState<number>(0); // Default to UTC
+  const [showImagePreviews, setShowImagePreviews] = useState<boolean>(true);
+  const [filterFilesWithExifDate, setFilterFilesWithExifDate] = useState<boolean>(false);
 
   const handleScan = async (path: string) => {
     setFolderPath(path);
@@ -55,10 +57,15 @@ export function App() {
   };
 
   const handleSelectAll = () => {
+    // Apply filtering if enabled - only show files without EXIF date that support EXIF
+    const filteredFiles = filterFilesWithExifDate 
+      ? files.filter(f => !f.exifDateTimeOriginal && f.mediaFileInfo.supportsExif)
+      : files;
+    
     // Select all updatable files on current page
     const startIndex = (currentPage - 1) * itemsPerPage;
     const endIndex = startIndex + itemsPerPage;
-    const currentPageFiles = files.slice(startIndex, endIndex);
+    const currentPageFiles = filteredFiles.slice(startIndex, endIndex);
     const updatableFilesOnPage = currentPageFiles.filter(f => f.canUpdate);
     
     const newSelected = new Set(selectedFiles);
@@ -181,11 +188,16 @@ export function App() {
       )}
 
       {!loading && files.length > 0 && (() => {
-        // Calculate pagination
-        const totalPages = Math.ceil(files.length / itemsPerPage);
+        // Apply filtering if enabled - only show files without EXIF date that support EXIF
+        const filteredFiles = filterFilesWithExifDate 
+          ? files.filter(f => !f.exifDateTimeOriginal && f.mediaFileInfo.supportsExif)
+          : files;
+        
+        // Calculate pagination on filtered files
+        const totalPages = Math.ceil(filteredFiles.length / itemsPerPage);
         const startIndex = (currentPage - 1) * itemsPerPage;
         const endIndex = startIndex + itemsPerPage;
-        const currentPageFiles = files.slice(startIndex, endIndex);
+        const currentPageFiles = filteredFiles.slice(startIndex, endIndex);
         
         // Check if all updatable files on current page are selected
         const updatableFilesOnPage = currentPageFiles.filter(f => f.canUpdate);
@@ -199,6 +211,29 @@ export function App() {
                 timezoneOffset={timezoneOffset}
                 onTimezoneChange={setTimezoneOffset}
               />
+              <div style={{ display: 'flex', gap: '20px', alignItems: 'center', flexWrap: 'wrap' }}>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+                  <input
+                    type="checkbox"
+                    checked={showImagePreviews}
+                    onChange={(e) => setShowImagePreviews(e.target.checked)}
+                    style={{ cursor: 'pointer' }}
+                  />
+                  <span style={{ fontSize: '14px' }}>Show Image Previews</span>
+                </label>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+                  <input
+                    type="checkbox"
+                    checked={filterFilesWithExifDate}
+                    onChange={(e) => {
+                      setFilterFilesWithExifDate(e.target.checked);
+                      setCurrentPage(1); // Reset to first page when filter changes
+                    }}
+                    style={{ cursor: 'pointer' }}
+                  />
+                  <span style={{ fontSize: '14px' }}>Hide Files with EXIF Date</span>
+                </label>
+              </div>
               <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
                 <button 
                   onClick={handleSelectAll}
@@ -226,15 +261,21 @@ export function App() {
               onToggleFile={handleToggleFile}
               imageMap={imageMap}
               timezoneOffset={timezoneOffset}
+              showImagePreviews={showImagePreviews}
             />
             <Pagination
               currentPage={currentPage}
               totalPages={totalPages}
               itemsPerPage={itemsPerPage}
-              totalItems={files.length}
+              totalItems={filteredFiles.length}
               onPageChange={setCurrentPage}
               onItemsPerPageChange={handleItemsPerPageChange}
             />
+            {filterFilesWithExifDate && (
+              <div style={{ marginTop: '10px', fontSize: '14px', color: '#666' }}>
+                Showing {filteredFiles.length} of {files.length} files (filtered)
+              </div>
+            )}
           </>
         );
       })()}

@@ -8,9 +8,10 @@ interface FileTableProps {
   onToggleFile: (filePath: string) => void;
   imageMap: Record<string, string | null>;
   timezoneOffset: number;
+  showImagePreviews: boolean;
 }
 
-export function FileTable({ files, selectedFiles, onToggleFile, imageMap, timezoneOffset }: FileTableProps) {
+export function FileTable({ files, selectedFiles, onToggleFile, imageMap, timezoneOffset, showImagePreviews }: FileTableProps) {
   if (files.length === 0) {
     return <div style={{ marginTop: '20px' }}>No files found with matching JSON metadata.</div>;
   }
@@ -22,7 +23,9 @@ export function FileTable({ files, selectedFiles, onToggleFile, imageMap, timezo
         <thead>
           <tr style={{ backgroundColor: '#f5f5f5' }}>
             <th style={{ padding: '10px', textAlign: 'left', border: '1px solid #ddd' }}>Select</th>
-            <th style={{ padding: '10px', textAlign: 'left', border: '1px solid #ddd' }}>Image</th>
+            {showImagePreviews && (
+              <th style={{ padding: '10px', textAlign: 'left', border: '1px solid #ddd' }}>Image</th>
+            )}
             <th style={{ padding: '10px', textAlign: 'left', border: '1px solid #ddd' }}>File Path</th>
             <th style={{ padding: '10px', textAlign: 'left', border: '1px solid #ddd' }}>JSON Metadata</th>
             <th style={{ padding: '10px', textAlign: 'left', border: '1px solid #ddd' }}>Image DateTimeOriginal</th>
@@ -39,6 +42,7 @@ export function FileTable({ files, selectedFiles, onToggleFile, imageMap, timezo
               onToggle={() => onToggleFile(fileInfo.mediaFileInfo.mediaFilePath)}
               imageBase64={imageMap[fileInfo.mediaFileInfo.mediaFilePath] || null}
               timezoneOffset={timezoneOffset}
+              showImagePreviews={showImagePreviews}
             />
           ))}
         </tbody>

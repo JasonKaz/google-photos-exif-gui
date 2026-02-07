@@ -8,9 +8,10 @@ interface FileTableRowProps {
   onToggle: () => void;
   imageBase64?: string | null;
   timezoneOffset: number;
+  showImagePreviews: boolean;
 }
 
-export function FileTableRow({ fileInfo, isSelected, onToggle, imageBase64, timezoneOffset }: FileTableRowProps) {
+export function FileTableRow({ fileInfo, isSelected, onToggle, imageBase64, timezoneOffset, showImagePreviews }: FileTableRowProps) {
   // Use base64 image data passed as prop
   const imageUrl = imageBase64 || '';
   
@@ -55,20 +56,22 @@ export function FileTableRow({ fileInfo, isSelected, onToggle, imageBase64, time
           style={{ cursor: fileInfo.canUpdate ? 'pointer' : 'not-allowed' }}
         />
       </td>
-      <td style={{ padding: '10px', border: '1px solid #ddd' }}>
-        {imageUrl ? (
-          <img
-            src={imageUrl}
-            alt={fileInfo.mediaFileInfo.mediaFileName}
-            style={{ maxWidth: '150px', maxHeight: '150px', objectFit: 'contain' }}
-            onError={(e) => {
-              (e.target as HTMLImageElement).style.display = 'none';
-            }}
-          />
-        ) : (
-          <span style={{ fontSize: '12px', color: '#999' }}>No preview</span>
-        )}
-      </td>
+      {showImagePreviews && (
+        <td style={{ padding: '10px', border: '1px solid #ddd' }}>
+          {imageUrl ? (
+            <img
+              src={imageUrl}
+              alt={fileInfo.mediaFileInfo.mediaFileName}
+              style={{ maxWidth: '150px', maxHeight: '150px', objectFit: 'contain' }}
+              onError={(e) => {
+                (e.target as HTMLImageElement).style.display = 'none';
+              }}
+            />
+          ) : (
+            <span style={{ fontSize: '12px', color: '#999' }}>No preview</span>
+          )}
+        </td>
+      )}
       <td style={{ padding: '10px', border: '1px solid #ddd', fontSize: '12px' }}>
         {fileInfo.mediaFileInfo.mediaFilePath}
       </td>
