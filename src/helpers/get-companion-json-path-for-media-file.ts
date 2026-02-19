@@ -37,7 +37,14 @@ function generateJsonNamesForCounterPattern(
     `${name}.supplemental-metadata${counter}.json`,             // "2013-12-03.supplemental-metadata(1).json"
     `${name}${mediaFileExtension}.supplemental-metadat${counter}.json`,             // "2013-12-03.jpg.supplemental-metadat(1).json"
     `${name}${mediaFileExtension}.supplemental-metadata${counter}.json`,             // "2013-12-03.jpg.supplemental-metadata(1).json"
-    `${name}.supplemental-metad${counter}.json`                // "2013-12-03.supplemental-metad(1).json"
+    `${name}.supplemental-metad${counter}.json`,                // "2013-12-03.supplemental-metad(1).json"
+    // Pattern 3: Counter removed from base, extension added, then various supplemental variations with counter
+    // Example: "MP(1).jpg" -> "MP.jpg.supplemental-met(1).json"
+    // Example: "MP-COLLAGE(1).jpg" -> "MP-COLLAGE.jpg.suppleme(1).json"
+    `${name}${mediaFileExtension}.supplemental-met${counter}.json`,  // "MP.jpg.supplemental-met(1).json"
+    `${name}${mediaFileExtension}.suppleme${counter}.json`,         // "MP-COLLAGE.jpg.suppleme(1).json"
+    `${name}${mediaFileExtension}.supplem${counter}.json`,          // "MP.jpg.supplem(1).json"
+    `${name}${mediaFileExtension}.supple${counter}.json`,           // "MP.jpg.supple(1).json"
   );
   
   return jsonNames;
@@ -67,7 +74,10 @@ export function getCompanionJsonPathForMediaFile(mediaFilePath: string): string|
     `${x}.supplemental.json`,
     `${x}.supplementa.json`,
     `${x}.supplement.json`,
+    `${x}.supplemen.json`,
+    `${x}.suppleme.json`,
     `${x}.supplem.json`,
+    `${x}.supple.json`,
     `${x}.supp.json`,
     `${x}.sup.json`,
     `${x}.su.json`,
@@ -82,6 +92,11 @@ export function getCompanionJsonPathForMediaFile(mediaFilePath: string): string|
     // so we can ignore the "-edited" suffix if there is one
     ...expansionMapper(mediaFileNameWithExtension.replace(/[-]edited/i, '')),
     ...expansionMapper(mediaFileNameWithoutExtension.replace(/[-]edited/i, '')),
+    // Sometimes the JSON filename has a double dot before .json
+    // Example: "PXL_20240901_053751330.LONG_EXPOSURE-01.COVER.jpg" -> "PXL_20240901_053751330.LONG_EXPOSURE-01.COVER..json"
+    // Also: "PXL_20241216_151429988-CINEMATIC_MOMENT_VIDEO.mp4" -> "PXL_20241216_151429988-CINEMATIC_MOMENT_VIDEO..json" (without extension)
+    `${mediaFileNameWithExtension}..json`,
+    `${mediaFileNameWithoutExtension}..json`,
   ];
 
   // Handle files with counter patterns (e.g., "foo(1).jpg" or "2013-12-03(1).jpg")
@@ -116,6 +131,16 @@ export function getCompanionJsonPathForMediaFile(mediaFilePath: string): string|
   // Check for iPhone live photos, match with the HEIC json file
   if (mediaFileNameWithExtension.endsWith('MP4')) {
     expandedPotentialJsonFileNames.push(...expansionMapper(`${mediaFileNameWithoutExtension}.heic`));
+  }
+
+  // Sometimes the JSON filename is truncated by one character at the end - Maybe it substrs the filename to a max length of 46??
+  // Example: "dji_export_20230616_153949_1686955189836_editor.mp4" -> "dji_export_20230616_153949_1686955189836_edito.json"
+  if (mediaFileNameWithoutExtension.length > 0) {
+    const truncatedName = mediaFileNameWithoutExtension.slice(0, -1);
+    const truncatedNameWithExtension = `${truncatedName}${mediaFileExtension}`;
+    // Try all the expansion patterns with the truncated name
+    expandedPotentialJsonFileNames.push(...expansionMapper(truncatedName));
+    expandedPotentialJsonFileNames.push(...expansionMapper(truncatedNameWithExtension));
   }
 
   // Now look to see if we have a JSON file in the same directory as the image for any of the potential JSON file names

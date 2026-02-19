@@ -255,6 +255,14 @@ export function App() {
                 Loading images...
               </div>
             )}
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              itemsPerPage={itemsPerPage}
+              totalItems={filteredFiles.length}
+              onPageChange={setCurrentPage}
+              onItemsPerPageChange={handleItemsPerPageChange}
+            />
             <FileTable 
               files={currentPageFiles}
               selectedFiles={selectedFiles}
