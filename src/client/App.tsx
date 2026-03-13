@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { FolderPicker } from './components/FolderPicker';
 import { FileTable } from './components/FileTable';
 import { Pagination } from './components/Pagination';
@@ -7,6 +7,8 @@ import { UnmatchedFilesTable } from './components/UnmatchedFilesTable';
 import { UnmatchedJsonFilesTable } from './components/UnmatchedJsonFilesTable';
 import { FileComparisonInfo } from './types';
 import { MediaFileInfo } from '../models/media-file-info';
+
+const BASE_TITLE = 'Google Photos EXIF Tool - GUI Mode';
 
 export function App() {
   const [folderPath, setFolderPath] = useState<string>('');
@@ -24,6 +26,35 @@ export function App() {
   const [timezoneOffset, setTimezoneOffset] = useState<number>(0); // Default to UTC
   const [showImagePreviews, setShowImagePreviews] = useState<boolean>(true);
   const [filterFilesWithExifDate, setFilterFilesWithExifDate] = useState<boolean>(false);
+  const prevLoadingRef = useRef<boolean>(false);
+
+  // Sync tab title with scan/update state so status is visible when user is in another tab
+  useEffect(() => {
+    const wasLoading = prevLoadingRef.current;
+
+    if (loading) {
+      document.title = `⏳ ${BASE_TITLE}`;
+    } else if (updating) {
+      document.title = `✏️ ${BASE_TITLE}`;
+    } else if (wasLoading) {
+      document.title = `✅ ${BASE_TITLE}`;
+      const timeoutId = setTimeout(() => {
+        document.title = BASE_TITLE;
+      }, 2500);
+      prevLoadingRef.current = loading;
+      return () => {
+        clearTimeout(timeoutId);
+        document.title = BASE_TITLE;
+      };
+    } else {
+      document.title = BASE_TITLE;
+    }
+
+    prevLoadingRef.current = loading;
+    return () => {
+      document.title = BASE_TITLE;
+    };
+  }, [loading, updating]);
 
   const handleScan = async (path: string) => {
     setFolderPath(path);
