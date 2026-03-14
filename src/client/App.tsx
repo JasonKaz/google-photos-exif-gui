@@ -185,8 +185,19 @@ export function App() {
         setError(`Some files failed to update:\n${errorMessages}`);
       } else {
         setError(null);
-        // Re-scan to refresh the data
-        //await handleScan(folderPath);
+        // If all items on the page were selected, clear selection after successful update
+        const filteredFiles = filterFilesWithExifDate
+          ? files.filter(f => !f.exifDateTimeOriginal && f.mediaFileInfo.supportsExif)
+          : files;
+        const startIndex = (currentPage - 1) * itemsPerPage;
+        const endIndex = startIndex + itemsPerPage;
+        const currentPageFiles = filteredFiles.slice(startIndex, endIndex);
+        const updatableFilesOnPage = currentPageFiles.filter(f => f.canUpdate);
+        const allOnPageHadBeenSelected = updatableFilesOnPage.length > 0 &&
+          updatableFilesOnPage.every(f => selectedFiles.has(f.mediaFileInfo.mediaFilePath));
+        if (allOnPageHadBeenSelected) {
+          setSelectedFiles(new Set());
+        }
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to update EXIF');

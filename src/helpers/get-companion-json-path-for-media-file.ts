@@ -78,6 +78,7 @@ export function getCompanionJsonPathForMediaFile(mediaFilePath: string): string|
     `${x}.suppleme.json`,
     `${x}.supplem.json`,
     `${x}.supple.json`,
+    `${x}.suppl.json`,
     `${x}.supp.json`,
     `${x}.sup.json`,
     `${x}.su.json`,
